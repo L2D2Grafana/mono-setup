@@ -31,7 +31,7 @@
     "lint": "eslint --cache --ext .js,.jsx,.ts,.tsx ./src",
     "lint:fix": "npm run lint -- --fix",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --skipLibCheck --noEmit"
   },
   "dependencies": {
     "@types/minimist": "^1.2.2",

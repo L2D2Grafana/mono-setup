@@ -10,5 +10,6 @@
     "pretty": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "exclude": ["node_modules"]
 }

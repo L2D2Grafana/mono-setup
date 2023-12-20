@@ -3,11 +3,16 @@ import { promisify } from 'node:util';
 import fs from 'fs';
 import { getExportPath } from '../../utils/utils.path';
 import { CliArgs } from '../types';
+import { PLUGIN_TYPES } from '../../constants';
 
 const exec = promisify(nodeExec);
 
-export async function prettifyFiles({ pluginName, orgName, pluginType }: CliArgs) {
-  const exportPath = getExportPath(pluginName, orgName, pluginType);
+export async function prettifyFiles({ monoRepoName, pluginName, orgName, pluginType }: CliArgs) {
+  const name = monoRepoName || pluginName;
+  if (!pluginType) {
+    pluginType = PLUGIN_TYPES.app;
+  }
+  const exportPath = getExportPath(name, orgName, pluginType);
 
   if (!fs.existsSync(exportPath)) {
     return '';

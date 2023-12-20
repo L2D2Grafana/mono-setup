@@ -70,5 +70,10 @@
     "rxjs": "7.8.0",{{/if}}
     "tslib": "2.5.3"
   },
+  {{#if monoRepo}}
+  "workspaces": [
+    "packages/*"
+  ],
+  {{/if}}
   "packageManager": "{{ packageManagerName }}@{{ packageManagerVersion }}"
 }

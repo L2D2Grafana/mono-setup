@@ -2,9 +2,14 @@ import { displayAsMarkdown } from '../../utils/utils.console';
 import { normalizeId } from '../../utils/utils.handlebars';
 import { getPackageManagerFromUserAgent } from '../../utils/utils.packageManager';
 import { CliArgs } from '../types';
+import { PLUGIN_TYPES } from '../../constants';
 
 export function printGenerateSuccessMessage(answers: CliArgs) {
-  const directory = normalizeId(answers.pluginName, answers.orgName, answers.pluginType);
+  const name = answers.monoRepoName || answers.pluginName;
+  if (!answers.pluginType) {
+    answers.pluginType = PLUGIN_TYPES.app;
+  }
+  const directory = normalizeId(name, answers.orgName, answers.pluginType);
   const { packageManagerName } = getPackageManagerFromUserAgent();
   const commands = [
     `- \`cd ./${directory}\``,

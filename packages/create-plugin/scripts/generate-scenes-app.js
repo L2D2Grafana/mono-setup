@@ -12,6 +12,7 @@ async function generate() {
   const generator = plop.getGenerator('create-plugin');
   await generator.runActions(
     {
+      monoRepo: false,
       pluginName: 'my-plugin',
       orgName: 'my-org',
       pluginDescription: 'Auto-generated scenes app',

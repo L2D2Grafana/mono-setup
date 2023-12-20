@@ -3,12 +3,22 @@ import { CliArgs } from '../types';
 import which from 'which';
 import fs from 'fs';
 import { exec } from 'child_process';
+import { PLUGIN_TYPES } from '../../constants';
 
 const SDK_GO_MODULE = 'github.com/grafana/grafana-plugin-sdk-go';
 
-export async function updateGoSdkAndModules({ pluginName, orgName, pluginType }: CliArgs): Promise<string> {
+export async function updateGoSdkAndModules({
+  monoRepoName,
+  pluginName,
+  orgName,
+  pluginType,
+}: CliArgs): Promise<string> {
+  const name = monoRepoName || pluginName;
+  if (!pluginType) {
+    pluginType = PLUGIN_TYPES.app;
+  }
   // plugin directory
-  const exportPath = getExportPath(pluginName, orgName, pluginType);
+  const exportPath = getExportPath(name, orgName, pluginType);
 
   // check if there is a go.mod file in exportPath
   const goModPath = `${exportPath}/go.mod`;

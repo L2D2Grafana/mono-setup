@@ -12,5 +12,11 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
+    {{#if monoRepo}}
+      {{#each pluginNames as |name|}}
+      - ./packages/{{name}}/dist:/var/lib/grafana/plugins/{{ name }}
+      {{/each}}
+    {{else}}
       - ./dist:/var/lib/grafana/plugins/{{ pluginId }}
+    {{/if}}
       - ./provisioning:/etc/grafana/provisioning

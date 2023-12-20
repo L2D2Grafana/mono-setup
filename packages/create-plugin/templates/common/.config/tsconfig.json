@@ -4,12 +4,14 @@
  * In order to extend the configuration follow the steps in
  * https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/extend-configurations#extend-the-typescript-config
  */
+
+
 {
   "compilerOptions": {
     "alwaysStrict": true,
     "declaration": false,
-    "rootDir": "../src",
-    "baseUrl": "../src",
+    "rootDir": "../packages",
+    "baseUrl": "../packages",
     "typeRoots": ["../node_modules/@types"],
     "resolveJsonModule": true
   },
@@ -21,6 +23,6 @@
     },
     "transpileOnly": true
   },
-  "include": ["../src", "./types"],
+  "include": ["../packages", "./types"],
   "extends": "@grafana/tsconfig"
 }

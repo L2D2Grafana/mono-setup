@@ -21,12 +21,12 @@ export function isWSL() {
   }
 }
 
-export function getPackageJson() {
-  return require(path.resolve(process.cwd(), 'package.json'));
+export function getPackageJson(packageJsonPath?: string) {
+  return require(path.resolve(packageJsonPath ? packageJsonPath : process.cwd(), 'package.json'));
 }
 
-export function getPluginJson() {
-  return require(path.resolve(process.cwd(), `${SOURCE_DIR}/plugin.json`));
+export function getPluginJson(pluginJsonPath?: string) {
+  return require(path.resolve(pluginJsonPath ? pluginJsonPath : process.cwd(), `${SOURCE_DIR}/plugin.json`));
 }
 
 export function hasReadme() {
@@ -36,7 +36,10 @@ export function hasReadme() {
 // Support bundling nested plugins by finding all plugin.json files in src directory
 // then checking for a sibling module.[jt]sx? file.
 export async function getEntries(): Promise<Record<string, string>> {
-  const pluginsJson = await glob('**/src/**/plugin.json', { absolute: true });
+  const pluginsJson = await glob('**/**/src/plugin.json', {
+    ignore: ['node_modules/**', '**/**/dist/**'],
+    absolute: true,
+  });
 
   const plugins = await Promise.all(
     pluginsJson.map((pluginJson) => {
