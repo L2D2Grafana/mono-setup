@@ -1,7 +1,11 @@
 apiVersion: 1
 
 apps:
+  {{#if pluginName}}
   - type: '{{ normalize_id pluginName orgName 'app' }}'
+  {{else}}
+  - type: '{{ pluginId }}'
+  {{/if}}
     org_id: 1
     org_name: '{{ orgName }}'
     disabled: false

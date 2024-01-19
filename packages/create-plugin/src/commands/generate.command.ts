@@ -9,7 +9,7 @@ import { printError } from '../utils/utils.console.js';
 import { directoryExists, getExportFileName, isFile } from '../utils/utils.files.js';
 import { normalizeId } from '../utils/utils.handlebars.js';
 import { getPackageManagerFromUserAgent, getPackageManagerInstallCmd } from '../utils/utils.packageManager.js';
-import { getExportPath } from '../utils/utils.path.js';
+import { getExportPath, getMonoRepoExportPath } from '../utils/utils.path.js';
 import { renderTemplateFromFile } from '../utils/utils.templates.js';
 import { getVersion } from '../utils/utils.version.js';
 import { prettifyFiles } from './generate/prettify-files.js';
@@ -20,8 +20,12 @@ import { CliArgs, TemplateData } from './types.js';
 
 export const generate = async (argv: minimist.ParsedArgs) => {
   const answers = await promptUser(argv);
+  const { monoRepo, monoRepoName, pluginNames, pluginName, pluginType } = answers;
+  const name = monoRepoName ? monoRepoName : pluginName;
+  const type = pluginType ? pluginType : null;
+  const subTemplateData: any = [];
   const templateData = getTemplateData(answers);
-  const exportPath = getExportPath(answers.pluginName, answers.orgName, answers.pluginType);
+  const exportPath = getExportPath(name, answers.orgName, type);
   const exportPathExists = await directoryExists(exportPath);
   const exportPathIsPopulated = exportPathExists ? (await readdir(exportPath)).length > 0 : false;
 
@@ -31,7 +35,15 @@ export const generate = async (argv: minimist.ParsedArgs) => {
     process.exit(1);
   }
 
-  const actions = getTemplateActions({ templateData, exportPath });
+  // Generate templates for each plugin in a monorepo
+  if (monoRepo) {
+    pluginNames.forEach((pluginName: string, i: number) => {
+      const subFolder = pluginName;
+      subTemplateData.push(getTemplateData(answers, subFolder, i));
+    });
+  }
+
+  const actions = getTemplateActions({ templateData, exportPath, answers, subTemplateData });
   const { changes, failures } = await generateFiles({ actions });
 
   changes.forEach((change) => {
@@ -50,18 +62,30 @@ export const generate = async (argv: minimist.ParsedArgs) => {
   printGenerateSuccessMessage(answers);
 };
 
-function getTemplateData(answers: CliArgs) {
-  const { pluginName, orgName, pluginType } = answers;
+function getTemplateData(answers: CliArgs, subFolder?: string, i?: number) {
+  const { monoRepoName, pluginName, orgName, pluginType, pluginTypes } = answers;
+
+  const name = subFolder ? subFolder : monoRepoName ? monoRepoName : pluginName;
+  const type = subFolder ? pluginTypes[i] : pluginType ? pluginType : null;
+  let isAppType = true;
+  if (subFolder) {
+    isAppType = pluginTypes[i] === PLUGIN_TYPES.app || pluginTypes[i] === PLUGIN_TYPES.scenes;
+  } else {
+    isAppType = pluginType === PLUGIN_TYPES.app || pluginType === PLUGIN_TYPES.scenes || true;
+  }
+
   const { features } = getConfig();
   const currentVersion = getVersion();
-  const pluginId = normalizeId(pluginName, orgName, pluginType);
+  const pluginId = normalizeId(name, orgName, type);
+
   // Support the users package manager of choice.
   const { packageManagerName, packageManagerVersion } = getPackageManagerFromUserAgent();
   const packageManagerInstallCmd = getPackageManagerInstallCmd(packageManagerName);
-  const isAppType = pluginType === PLUGIN_TYPES.app || pluginType === PLUGIN_TYPES.scenes;
+
   const templateData: TemplateData = {
     ...answers,
     pluginId,
+    ...(!subFolder && monoRepoName ? { pluginDescription: 'mono repo' } : {}),
     packageManagerName,
     packageManagerInstallCmd,
     packageManagerVersion,
@@ -74,38 +98,79 @@ function getTemplateData(answers: CliArgs) {
   return templateData;
 }
 
-function getTemplateActions({ exportPath, templateData }: { exportPath: string; templateData: any }) {
+function getTemplateActions({
+  exportPath,
+  templateData,
+  answers,
+  subTemplateData,
+}: {
+  exportPath: string;
+  templateData: any;
+  answers: any;
+  subTemplateData?: any[];
+}) {
+  const { monoRepo, monoRepoName, orgName, pluginNames, pluginTypes } = answers;
   const commonActions = getActionsForTemplateFolder({
     folderPath: TEMPLATE_PATHS.common,
     exportPath,
     templateData,
   });
 
-  // Copy over files from the plugin type specific folder, e.g. "templates/app" for "app" plugins ("app" | "panel" | "datasource").
-  const pluginTypeSpecificActions = getActionsForTemplateFolder({
-    folderPath: TEMPLATE_PATHS[templateData.pluginType],
-    exportPath,
-    templateData,
-  });
+  let pluginActions: any = [];
+  if (monoRepo) {
+    pluginNames.forEach((pluginName: string, i: number) => {
+      const exportPathMonoRepo = getMonoRepoExportPath(monoRepoName, orgName, null, pluginName);
 
-  // Copy over backend-specific files (if selected)
-  const backendFolderPath = templateData.isAppType ? TEMPLATE_PATHS.backendApp : TEMPLATE_PATHS.backend;
-  const backendActions = templateData.hasBackend
-    ? getActionsForTemplateFolder({ folderPath: backendFolderPath, exportPath, templateData })
-    : [];
+      // Copy over files from the plugin type specific folder, e.g. "templates/app" for "app" plugins ("app" | "panel" | "datasource").
+      const pluginTypeSpecificActions = getActionsForTemplateFolder({
+        folderPath: TEMPLATE_PATHS[pluginTypes[i]],
+        exportPath: exportPathMonoRepo,
+        templateData: subTemplateData[i],
+      });
 
-  // Common, pluginType and backend actions can contain different templates for the same destination.
-  // This filtering removes the duplicate file additions to make sure the correct template is scaffolded.
-  // Note that the order is reversed so backend > pluginType > common
-  const pluginActions = [...backendActions, ...pluginTypeSpecificActions, ...commonActions].reduce((acc, file) => {
-    const actionExists = acc.find((f) => f.path === file.path);
-    // return early to prevent duplicate file additions
-    if (actionExists) {
+      // TODO: hasBackend is not supported for monorepos yet.
+
+      // Common, pluginType and backend actions can contain different templates for the same destination.
+      // This filtering removes the duplicate file additions to make sure the correct template is scaffolded.
+      // Note that the order is reversed so backend > pluginType > common
+      const dedupe = [...pluginTypeSpecificActions].reduce((acc, file) => {
+        const actionExists = acc.find((f) => f.path === file.path);
+        // return early to prevent duplicate file additions
+        if (actionExists) {
+          return acc;
+        }
+        acc.push(file);
+        return acc;
+      }, []);
+
+      pluginActions = [...pluginActions, ...dedupe];
+    });
+    pluginActions = [...pluginActions, ...commonActions];
+  } else {
+    // Copy over files from the plugin type specific folder, e.g. "templates/app" for "app" plugins ("app" | "panel" | "datasource").
+    const pluginTypeSpecificActions = getActionsForTemplateFolder({
+      folderPath: TEMPLATE_PATHS[templateData.pluginType],
+      exportPath,
+      templateData,
+    });
+    // Copy over backend-specific files (if selected)
+    const backendFolderPath = templateData.isAppType ? TEMPLATE_PATHS.backendApp : TEMPLATE_PATHS.backend;
+    const backendActions = templateData.hasBackend
+      ? getActionsForTemplateFolder({ folderPath: backendFolderPath, exportPath, templateData })
+      : [];
+    // Common, pluginType and backend actions can contain different templates for the same destination.
+    // This filtering removes the duplicate file additions to make sure the correct template is scaffolded.
+    // Note that the order is reversed so backend > pluginType > common
+    pluginActions = [...backendActions, ...pluginTypeSpecificActions, ...commonActions].reduce((acc, file) => {
+      const actionExists = acc.find((f) => f.path === file.path);
+      // return early to prevent duplicate file additions
+      if (actionExists) {
+        return acc;
+      }
+      acc.push(file);
       return acc;
-    }
-    acc.push(file);
-    return acc;
-  }, []);
+    }, []);
+  }
 
   // Copy over Github workflow files (if selected)
   const ciWorkflowActions = templateData.hasGithubWorkflows
@@ -170,11 +235,15 @@ async function generateFiles({ actions }: { actions: any[] }) {
       }
 
       const rendered = renderTemplateFromFile(action.templateFile, action.data);
+
       await writeFile(action.path, rendered);
       changes.push({
         path: action.path,
       });
     } catch (error) {
+      if (action.templateFile.includes('package.json')) {
+        console.log('error :>> ', error);
+      }
       failures.push({
         path: action.path,
         error: error.message || error.toString(),

@@ -20,12 +20,21 @@ export const ifEq = (a: any, b: any, options: HelperOptions) => {
 };
 
 export const normalizeId = (pluginName: string, orgName: string, type: PLUGIN_TYPES) => {
-  const re = new RegExp(`-?${type}$`, 'i');
   const nameRegex = new RegExp('[^0-9a-zA-Z]', 'g');
-
-  const newPluginName = pluginName.replace(re, '').replace(nameRegex, '');
   const newOrgName = orgName.replace(nameRegex, '');
-  return newOrgName.toLowerCase() + '-' + newPluginName.toLowerCase() + `-${type}`;
+  if (type) {
+    const re = new RegExp(`-?${type}$`, 'i');
+    const pluginType = type ? `-${type}` : '';
+    const newPluginName = pluginName.replace(re, '').replace(nameRegex, '');
+    const newOrgName = orgName.replace(nameRegex, '');
+    return newOrgName.toLowerCase() + '-' + newPluginName.toLowerCase() + pluginType;
+  }
+  return newOrgName.toLowerCase() + '-' + pluginName.toLowerCase();
+};
+
+export const notCase = (value: any) => {
+  console.log('value :>> ', value);
+  return !value;
 };
 
 // Register our helpers and partials with handlebars.
@@ -50,6 +59,7 @@ function registerHandlebarsHelpers() {
     pascalCase: pascalCase,
     if_eq: ifEq,
     normalize_id: normalizeId,
+    not: notCase,
   };
 
   Object.keys(helpers).forEach((helperName) =>

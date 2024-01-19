@@ -1,13 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
-  "name": "{{ titleCase pluginName }}",
-  "id": "{{ normalize_id pluginName orgName 'app' }}",{{#if hasBackend}}
+  "name": "{{ titleCase pluginId }}",
+  "id": "{{ pluginId }}",{{#if hasBackend}}
   "backend": true,
-  "executable": "gpx_{{ snakeCase pluginName }}",{{/if}}
+  "executable": "gpx_{{ snakeCase pluginId }}",{{/if}}
   "info": {
     "keywords": ["app"],
+    {{#if pluginDescription}}
     "description": "{{ sentenceCase pluginDescription }}",
+    {{/if}}
     "author": {
       "name": "{{ sentenceCase orgName }}"
     },

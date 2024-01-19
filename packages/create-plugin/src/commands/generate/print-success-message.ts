@@ -4,7 +4,9 @@ import { getPackageManagerFromUserAgent } from '../../utils/utils.packageManager
 import { CliArgs } from '../types.js';
 
 export function printGenerateSuccessMessage(answers: CliArgs) {
-  const directory = normalizeId(answers.pluginName, answers.orgName, answers.pluginType);
+  const name = answers.monoRepoName || answers.pluginName;
+
+  const directory = normalizeId(name, answers.orgName, answers.pluginType);
   const { packageManagerName } = getPackageManagerFromUserAgent();
   const commands = [
     `- \`cd ./${directory}\``,
@@ -19,7 +21,9 @@ export function printGenerateSuccessMessage(answers: CliArgs) {
     '- Open http://localhost:3000 in your browser to create a dashboard to begin developing your plugin.',
   ];
 
-  const msg = `\n# Congratulations on scaffolding a Grafana ${answers.pluginType} plugin! 🚀
+  const msg = `\n# Congratulations on scaffolding a Grafana ${
+    answers.pluginType ? answers.pluginType : 'mono-repo'
+  } plugin! 🚀
 
 ## What's next?
 

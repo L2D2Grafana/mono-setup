@@ -9,3 +9,15 @@ export function getExportPath(pluginName: string, orgName: string, pluginType: P
     return path.join(process.cwd(), normalizeId(pluginName, orgName, pluginType));
   }
 }
+export function getMonoRepoExportPath(
+  monoRepoName: string,
+  orgName: string,
+  pluginType: PLUGIN_TYPES,
+  pluginName: string
+): string {
+  if (IS_DEV) {
+    return DEV_EXPORT_DIR;
+  } else {
+    return path.join(process.cwd(), normalizeId(monoRepoName, orgName, pluginType) + '/packages/' + pluginName + '/');
+  }
+}

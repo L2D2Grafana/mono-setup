@@ -1,5 +1,9 @@
 {
+  {{#if monoRepo}}
+  "name": "{{ kebabCase monoRepoName }}",
+  {{else}}
   "name": "{{ kebabCase pluginName }}",
+  {{/if}}
   "version": "1.0.0",
   "description": "{{ sentenceCase pluginDescription }}",
   "scripts": {

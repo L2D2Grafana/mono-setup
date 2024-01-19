@@ -47,6 +47,43 @@ type Choice = {
 
 const prompts: Prompt[] = [
   {
+    name: 'monoRepo',
+    type: 'confirm',
+    message: 'Is this a mono repo?',
+    initial: false,
+  },
+  {
+    shouldPrompt: (answers: CliArgs) => answers.monoRepo,
+    name: 'monoRepoName',
+    type: 'input',
+    message: 'What is going to be the name of your monorepo',
+    validate: (value: string) => {
+      if (/.+/.test(value)) {
+        return true;
+      }
+      return 'Monorepo name is required';
+    },
+  },
+  {
+    shouldPrompt: (answers: CliArgs) => answers.monoRepo,
+    name: 'pluginNames',
+    type: 'list',
+    message: 'List the names of your plugins (comma-separated):',
+    validate: (value) => {
+      if (/.+/.test(value)) {
+        return true;
+      }
+      return 'Plugin names are required';
+    },
+  },
+  {
+    shouldPrompt: (answers: CliArgs) => answers.monoRepo,
+    name: 'pluginTypes',
+    type: 'list',
+    message: `List the names of your plugin types in order to match your previously entered plugin names (comma-separated) ${PLUGIN_TYPES.app}, ${PLUGIN_TYPES.datasource}, ${PLUGIN_TYPES.panel}, ${PLUGIN_TYPES.scenes}:`,
+  },
+  {
+    shouldPrompt: (answers: CliArgs) => !answers.monoRepo,
     name: 'pluginName',
     type: 'input',
     message: 'What is going to be the name of your plugin?',
@@ -69,23 +106,25 @@ const prompts: Prompt[] = [
     },
   },
   {
+    shouldPrompt: (answers: CliArgs) => !answers.monoRepo,
     name: 'pluginDescription',
     type: 'input',
     message: 'How would you describe your plugin?',
     initial: '',
   },
   {
+    shouldPrompt: (answers: CliArgs) => !answers.monoRepo,
     name: 'pluginType',
     type: 'select',
     choices: [PLUGIN_TYPES.app, PLUGIN_TYPES.datasource, PLUGIN_TYPES.panel, PLUGIN_TYPES.scenes],
     message: 'What type of plugin would you like?',
   },
   {
+    shouldPrompt: (answers: CliArgs) => answers.pluginType !== PLUGIN_TYPES.panel || !answers.monoRepo,
     name: 'hasBackend',
     type: 'confirm',
     message: 'Do you want a backend part of your plugin?',
     initial: false,
-    shouldPrompt: (answers: CliArgs) => answers.pluginType !== PLUGIN_TYPES.panel,
   },
   {
     name: 'hasGithubWorkflows',

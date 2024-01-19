@@ -13,13 +13,13 @@ module.exports = {
     '\\.(css|scss|sass)$': 'identity-obj-proxy',
     'react-inlinesvg': path.resolve(__dirname, 'jest', 'mocks', 'react-inlinesvg.tsx'),
   },
-  modulePaths: ['<rootDir>/src'],
+  modulePaths: ['<rootDir>/packages'],
   setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   testMatch: [
-    '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
-    '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
+    '<rootDir>/packages/**/__tests__/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/packages/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
+    '<rootDir>/packages/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
   ],
   transform: {
     '^.+\\.(t|j)sx?$': [
